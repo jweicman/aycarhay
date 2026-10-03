@@ -9,11 +9,14 @@ Website: http://geekslabs.com
 $(function(){
     "use strict";
     // Full screen pre loader
-    $(window).load(function(){
+    function dismissPreloader() {
         $("#pre-loader").delay(500).fadeOut(2000);
         $(".preload-logo").addClass('zoomOutUp');
         $(".loader").addClass('zoomOutDown');
-    });   
+    }
+    if (document.readyState === "complete") dismissPreloader();
+    else $(window).on("load", dismissPreloader);
+    setTimeout(dismissPreloader, 5000);
     
 
     //Logo fadeIn fadeOut on 
@@ -141,25 +144,13 @@ $(function(){
         }
     });
 
-    /* Instagram feed 
-    * For more help got to : http://instafeedjs.com/
-    */
-    var feed = new Instafeed({
-      get: 'user',
-      resolution :'low_resolution', //thumbnail (default) - 150x150, low_resolution - 306x306, standard_resolution - 612x612
-      limit:'12', //Maximum number of Images to add. Max of 60.
-      userId: 3052259048, //Get the user id
-      accessToken: '3052259048.fb914b1.aacc7d5cb1264b88aee23cab732e2205', //Generate access token http://jelled.com/instagram/access-token
-      template: '<div class="col-md-2 instagram-listing"><a href="{{link}}" target="_blank"><img class="img-responsive" src="{{image}}" /><div class="instagram-overlay"><p class="instagram-caption">{{caption}}</p><span class="instagram-likes">{{likes}} <span class="icon_heart_alt"></span></span><span class="social_instagram_square"></span></div></a></div>',
-
-      //filter by tag if you want :)
-
-       /*filter: function(image) {
-         return image.tags.indexOf('valentinesday') >= 0;
-       }*/
-
-    });
-    feed.run();
+    // The retired Instagram API cannot serve this static site.
+    $('#instafeed').append(
+        $('<p class="text-center">').append(
+            $('<a>', {href: 'https://www.facebook.com/aycarhaymultiespacio',
+                target: '_blank', rel: 'noopener', text: 'Ver nuestras fotos y eventos'})
+        )
+    );
 
     // grid gallery (Portfolio)
     new CBPGridGallery( document.getElementById( 'grid-gallery' ) );
@@ -195,139 +186,30 @@ $(function(){
         $('#theme-options').slideToggle("slow")
     });
 
-    // Ajax working contact form
-    $("#submit").click(function() { 
-        //get input field values
-        var user_name       = $('input[name=name]').val(); 
-        var user_email      = $('input[name=email]').val();
-        var user_phone      = $('input[name=phone]').val();
-        var user_message    = $('textarea[name=message]').val();
-        var post_data;
-        var output;
-        
-        //simple validation at client's end
-        //we simply change border color to red if empty field using .css()
-        var proceed = true;
-        if(user_name==""){ 
-            $('input[name=name]').css('border-color','red'); 
-            proceed = false;
+    // GitHub Pages has no PHP backend. Open a draft for the visitor to send.
+    $("#submit").click(function(event) {
+        event.preventDefault();
+        var fields = $('#contactform input, #contactform textarea');
+        var complete = true;
+        fields.each(function() {
+            var empty = !$.trim($(this).val());
+            $(this).css('border-color', empty ? 'red' : '');
+            if (empty) complete = false;
+        });
+        if (!complete) {
+            $('#form_result').text('Completá todos los campos para continuar.');
+            return;
         }
-        if(user_email==""){ 
-            $('input[name=email]').css('border-color','red'); 
-            proceed = false;
-        }
-        if(user_phone=="") {    
-            $('input[name=phone]').css('border-color','red'); 
-            proceed = false;
-        }
-        if(user_message=="") {  
-            $('textarea[name=message]').css('border-color','red'); 
-            proceed = false;
-        }
-
-        //everything looks good! letsproceed
-        if(proceed) 
-        {
-            //data to be sent to server
-            post_data = {'userName':user_name, 'userEmail':user_email, 'userPhone':user_phone, 'userMessage':user_message};
-            
-            //Ajax post data to server
-            $.post('include/contact.php', post_data, function(response){  
-                
-                //load json data from server and output message     
-                if(response.type == 'error')
-                {
-                    output = '<div class="error text-center">'+response.text+'</div>';
-                }else{
-                
-                    output = '<div class="success text-center">'+response.text+'</div>';
-                    
-                    //reset values in all input fields
-                    $('#contact_form input').val(''); 
-                    $('#contact_form textarea').val(''); 
-                }
-                
-                $("#form_result").hide().html(output).slideDown();
-            }, 'json');
-            
-        }
+        var message = 'Hola Ay Carhay!\nNombre: ' + $.trim($('#name').val()) +
+            '\nEmail: ' + $.trim($('#email').val()) +
+            '\nTeléfono: ' + $.trim($('#phone').val()) +
+            '\nConsulta: ' + $.trim($('#comments').val());
+        window.open('https://wa.me/5491125742337?text=' + encodeURIComponent(message),
+            '_blank', 'noopener');
+        $('#form_result').text('Se abrió WhatsApp con tu consulta. Revisala y enviá el mensaje allí.');
     });
-    
-    //reset previously set border colors and hide all message on .keyup()
-    $("#contact_form input, #contact_form textarea").keyup(function() { 
-        $("#contact_form input, #contact_form textarea").css('border-color',''); 
-        $("#form_result").slideUp();
+    $('#contactform input, #contactform textarea').on('input', function() {
+        $(this).css('border-color', '');
+        $('#form_result').empty();
     });
-
 });
-
-// Google Maps
-google.maps.event.addDomListener(window, 'load', loadGoogleMap);
-function loadGoogleMap() {    
-    $('#map').addClass('loading');    
-    var latlng = new google.maps.LatLng(-34.5892737, -58.4396122); 
-    var settings = {
-        zoom: 14,
-        center: new google.maps.LatLng(-34.5892737, -58.4396122),
-        mapTypeId: google.maps.MapTypeId.ROADMAP,
-        mapTypeControl: false,
-        scrollwheel: false,
-        draggable: true,
-        //styles: [{featureType:'all',stylers:[{saturation:-100},{gamma:0.50}]}],
-        mapTypeControlOptions: {style: google.maps.MapTypeControlStyle.DROPDOWN_MENU},
-        navigationControl: false,
-        navigationControlOptions: {style: google.maps.NavigationControlStyle.SMALL},            
-    };
-    var map = new google.maps.Map(document.getElementById("map"), settings);
-
-    google.maps.event.addDomListener(window, "resize", function() {
-        var center = map.getCenter();
-        google.maps.event.trigger(map, "resize");
-        map.setCenter(center);
-        $('#map').removeClass('loading');
-    });
-
-    var contentString =
-        '<div id="info-window">'+
-        '<p>18 McLuice Road, Vellyon Hills,<br /> New York, NY 10010<br /><a href="https://plus.google.com/102896039836143247306/about?gl=za&hl=en" target="_blank">Get directions</a></p>'+
-        '</div>';
-    var infowindow = new google.maps.InfoWindow({
-        content: contentString
-    });
-
-    var companyImage = new google.maps.MarkerImage('http://prueba.aycarhay.com.ar/images/favicon.png',
-        new google.maps.Size(36,62),// Width and height of the marker
-        new google.maps.Point(0,0),
-        new google.maps.Point(18,52)// Position of the marker
-    );
-    /*
-    var companyImage = new google.maps.MarkerImage('http://demo.geekslabs.com/ashoka/images/map-marker.png',
-        new google.maps.Size(36,62),// Width and height of the marker
-        new google.maps.Point(0,0),
-        new google.maps.Point(18,52)// Position of the marker
-    );
-
-    var companyImage = {
-        url: 'favicon.ico',
-        // This marker is 20 pixels wide by 32 pixels high.
-        size: new google.maps.Size(20, 32),
-        // The origin for this image is (0, 0).
-        origin: new google.maps.Point(0, 0),
-        // The anchor for this image is the base of the flagpole at (0, 32).
-        anchor: new google.maps.Point(0, 32)
-    };*/
-    var companyPos = new google.maps.LatLng(-34.5892606,-58.4396227);
-
-    var companyMarker = new google.maps.Marker({
-        position: companyPos,
-        map: map,
-        icon: companyImage,
-        title:"Shapeshift Interactive",
-        zIndex: 3});
-
-    google.maps.event.addListener(companyMarker, 'click', function() {
-        infowindow.open(map,companyMarker);
-        pageView('/#address');
-    });
-
-};
